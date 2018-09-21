@@ -1,0 +1,106 @@
+server:
+  port: 9999
+
+spring:
+  zipkin:
+    rabbitmq:
+      queue: zipkin
+  sleuth:
+    sampler:
+      percentage: 0.2
+
+zuul:
+  ribbon:
+    eager-load:
+      enabled: true
+      clients: hol-auth-center,hol-service-upms,hol-service-user,hol-cauth-center,hol-service-cadmin,
+  ignoredServices: '*'
+  host:
+    connect-timeout-millis: 10000
+    socket-timeout-millis: 10000
+  ratelimit:
+    key-prefix: pig-ratelimite
+    enabled: true
+    repository: REDIS
+    behind-proxy: true
+    policies:
+      pig-upms-service:
+        limit: 100
+        quota: 100
+        refresh-interval: 3
+
+# sharding读写分离
+sharding:
+  jdbc:
+    datasource:
+      names: ds_master,ds_slave_0
+      ds_master:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        username: root
+        password: HolUcd2238@
+        jdbc-url: jdbc:mysql://172.22.27.12:3306/hol?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
+      ds_slave_0:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        username: root
+        password: HolUcd2238@
+        jdbc-url: jdbc:mysql://172.22.27.12:3306/hol?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false
+    config:
+      masterslave:
+        name: ds
+        masterDataSourceName: ds_master
+        slaveDataSourceNames: [ds_slave_0]
+        loadBalanceAlgorithmType: round_robin
+
+security:
+  validate:
+    code: true
+    preview: false
+  sessions: stateless
+  oauth2:
+    client:
+      client-id: hol
+      client-secret: hol
+    resource:
+      loadBalanced: true
+      token-info-uri: ${security.auth.server}/oauth/check-token
+      service-id: hol-gateway-center
+      jwt:
+         key-uri: ${security.auth.server}/oauth/token_key #解析jwt令牌所需要密钥的地址
+  encode: 
+    key: 1234567887654321
+
+
+ignore:
+  urls:
+    - /mobile/**
+    - /auth/**
+    - /admin/code/*
+    - /admin/smsCode/*
+    - /admin/user/info
+    - /admin/userMenu
+#    - /swagger-resources/**
+#    - /swagger-ui.html
+#    - /*/v2/api-docs
+#    - /swagger/api-docs
+    - /webjars/**
+    - /basic/** #做调试
+    - /resource/** #做调试
+    - /information/** #做调试
+    - /admin/** #做调试
+    - /sms/** #做调试
+    - /flight/** #做调试
+    # 客户端
+    - /cmobile/**
+    - /cauth/**
+    - /magpie/code/*
+    - /magpie/smsCode/*
+    - /magpie/user/info
+    - /magpie/userMenu
+    - /magpie/indexAdv
+    - /member/checkAuthMember
+    - /magpie/** #做调试
+    - /oss/** #oss服务
+  clients:
+    - app
